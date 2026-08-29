@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import NavBar from '@/components/NavBar'
@@ -31,7 +32,7 @@ export default function DashboardPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-        async function loadUserAndTickets() {
+    async function loadUserAndTickets() {
       const { data: authData } = await supabase.auth.getUser()
       if (!authData.user) {
         router.push('/login')
@@ -101,16 +102,11 @@ export default function DashboardPage() {
     setSubmitting(false)
   }
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
-
   if (!user) return <div className="flex-1 flex items-center justify-center text-text-muted">Loading...</div>
 
   return (
     <div className="flex-1 flex flex-col">
-            <NavBar role="customer" email={user.email || ''} />
+      <NavBar role="customer" email={user.email || ''} />
 
       <main className="max-w-4xl mx-auto w-full px-6 py-10 flex-1">
         <h1 className="text-2xl font-semibold mb-1">My Tickets</h1>
@@ -162,20 +158,22 @@ export default function DashboardPage() {
         )}
         <div className="space-y-3">
           {tickets.map((ticket) => (
-            <div key={ticket.id} className="glass-card rounded-xl p-5">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-medium">{ticket.subject}</h3>
-                <span
-                  className={`text-xs font-medium px-2.5 py-1 rounded-full border capitalize ${statusStyles[ticket.status] || ''}`}
-                >
-                  {ticket.status.replace('_', ' ')}
-                </span>
+            <Link key={ticket.id} href={`/dashboard/${ticket.id}`}>
+              <div className="glass-card rounded-xl p-5 hover:bg-surface-hover transition cursor-pointer">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">{ticket.subject}</h3>
+                  <span
+                    className={`text-xs font-medium px-2.5 py-1 rounded-full border capitalize ${statusStyles[ticket.status] || ''}`}
+                  >
+                    {ticket.status.replace('_', ' ')}
+                  </span>
+                </div>
+                <p className="text-sm text-text-muted mb-2">{ticket.description}</p>
+                <p className="text-xs text-text-muted font-mono">
+                  {new Date(ticket.created_at).toLocaleString()}
+                </p>
               </div>
-              <p className="text-sm text-text-muted mb-2">{ticket.description}</p>
-              <p className="text-xs text-text-muted font-mono">
-                {new Date(ticket.created_at).toLocaleString()}
-              </p>
-            </div>
+            </Link>
           ))}
         </div>
       </main>
