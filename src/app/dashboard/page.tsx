@@ -30,12 +30,28 @@ export default function DashboardPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    async function loadUserAndTickets() {
+        async function loadUserAndTickets() {
       const { data: authData } = await supabase.auth.getUser()
       if (!authData.user) {
         router.push('/login')
         return
       }
+
+      const { data: profile } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', authData.user.id)
+        .single()
+
+      if (profile?.role === 'agent') {
+        router.push('/agent')
+        return
+      }
+      if (profile?.role === 'admin') {
+        router.push('/admin')
+        return
+      }
+
       setUser(authData.user)
 
       const { data: ticketData, error: ticketError } = await supabase

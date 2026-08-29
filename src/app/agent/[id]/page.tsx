@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
@@ -37,6 +38,18 @@ type Suggestion = {
   model_used: string
 }
 
+const priorityStyles: Record<string, string> = {
+  high: 'bg-danger/10 text-danger border-danger/20',
+  medium: 'bg-warning/10 text-warning border-warning/20',
+  low: 'bg-success/10 text-success border-success/20',
+}
+
+const statusStyles: Record<string, string> = {
+  open: 'bg-warning/10 text-warning border-warning/20',
+  in_progress: 'bg-primary/10 text-primary border-primary/20',
+  resolved: 'bg-success/10 text-success border-success/20',
+}
+
 export default function AgentTicketDetail() {
   const router = useRouter()
   const params = useParams()
@@ -51,7 +64,8 @@ export default function AgentTicketDetail() {
 
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null)
   const [loadingSuggestion, setLoadingSuggestion] = useState(false)
-  const [feedbackGiven, setFeedbackGiven] = useState(false)
+  const [feedbackGiven, setFeedbackGiven] = useState<string | null>(null)
+  const [showSources, setShowSources] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -82,7 +96,6 @@ export default function AgentTicketDetail() {
 
       setMessages(messageData || [])
 
-      // Check if a suggestion already exists for this ticket
       const { data: existingSuggestion } = await supabase
         .from('ai_suggestions')
         .select('*')
@@ -94,7 +107,6 @@ export default function AgentTicketDetail() {
       if (existingSuggestion) {
         setSuggestion(existingSuggestion)
       } else if (ticketData.status !== 'resolved') {
-        // Auto-generate a suggestion on first open
         generateSuggestion(ticketData.description)
       }
     }
@@ -130,9 +142,9 @@ export default function AgentTicketDetail() {
       final_text: reply || suggestion.suggested_text,
     })
 
-    setFeedbackGiven(true)
+    setFeedbackGiven(outcome)
 
-    if (outcome === 'accepted') {
+    if (outcome === 'accepted' || outcome === 'edited') {
       setReply(suggestion.suggested_text)
     }
   }
@@ -173,100 +185,162 @@ export default function AgentTicketDetail() {
     setSubmitting(false)
   }
 
-  if (!ticket) return <p style={{ padding: '40px' }}>Loading...</p>
+  if (!ticket) return <div className="flex-1 flex items-center justify-center text-text-muted">Loading...</div>
 
   return (
-    <div style={{ padding: '40px', fontFamily: 'sans-serif', maxWidth: '700px', margin: '0 auto' }}>
-      <button onClick={() => router.push('/agent')} style={{ marginBottom: '20px' }}>
-        ← Back to queue
-      </button>
-
-      <h1>{ticket.subject}</h1>
-      <p><em>Status: {ticket.status}</em> — <em>Priority: {ticket.priority}</em></p>
-
-      <div style={{ border: '1px solid #444', borderRadius: '8px', padding: '16px', marginBottom: '20px' }}>
-        <strong>Customer&apos;s original message:</strong>
-        <p>{ticket.description}</p>
-      </div>
-
-      <h3>Conversation</h3>
-      {messages.map((msg) => (
-        <div
-          key={msg.id}
-          style={{
-            padding: '10px',
-            marginBottom: '8px',
-            backgroundColor: msg.sender_role === 'agent' ? '#1a3a1a' : '#2a2a2a',
-            borderRadius: '6px',
-          }}
-        >
-          <strong>{msg.sender_role}:</strong> {msg.content}
+    <div className="flex-1 flex flex-col">
+      <header className="border-b border-border">
+        <div className="max-w-3xl mx-auto px-6 py-4">
+          <Link href="/agent" className="text-sm text-text-muted hover:text-text transition inline-flex items-center gap-1.5">
+            ← Back to queue
+          </Link>
         </div>
-      ))}
+      </header>
 
-      {ticket.status !== 'resolved' && (
-        <>
-          <h3 style={{ marginTop: '24px' }}>🤖 AI Suggested Reply</h3>
+      <main className="max-w-3xl mx-auto w-full px-6 py-10 flex-1">
+        <div className="flex items-center justify-between mb-2 gap-3">
+          <h1 className="text-2xl font-semibold">{ticket.subject}</h1>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full border capitalize ${priorityStyles[ticket.priority] || ''}`}>
+              {ticket.priority}
+            </span>
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full border capitalize ${statusStyles[ticket.status] || ''}`}>
+              {ticket.status.replace('_', ' ')}
+            </span>
+          </div>
+        </div>
 
-          {loadingSuggestion && <p>Generating suggestion...</p>}
+        <div className="glass-card rounded-xl p-5 mb-6 mt-6">
+          <p className="text-xs font-medium text-text-muted mb-2 uppercase tracking-wide">Customer&apos;s original message</p>
+          <p className="text-text">{ticket.description}</p>
+        </div>
 
-          {suggestion && (
-            <div style={{ border: '1px solid #4a7cff', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-              <p style={{ whiteSpace: 'pre-wrap' }}>{suggestion.suggested_text}</p>
+        {messages.length > 0 && (
+          <div className="mb-6">
+            <p className="text-xs font-medium text-text-muted mb-3 uppercase tracking-wide">Conversation</p>
+            <div className="space-y-2">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`rounded-xl p-4 border ${
+                    msg.sender_role === 'agent'
+                      ? 'bg-success/5 border-success/20'
+                      : 'bg-surface border-border'
+                  }`}
+                >
+                  <p className="text-xs font-medium text-text-muted mb-1 capitalize">{msg.sender_role}</p>
+                  <p className="text-sm">{msg.content}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-              <details style={{ marginTop: '12px' }}>
-                <summary style={{ cursor: 'pointer', color: '#4a7cff' }}>
-                  View sources ({suggestion.retrieved_chunks?.length || 0})
-                </summary>
-                {suggestion.retrieved_chunks?.map((chunk) => (
-                  <div key={chunk.id} style={{ marginTop: '8px', fontSize: '0.9em', color: '#aaa' }}>
-                    <strong>{chunk.title}</strong> ({chunk.category}) — similarity: {(chunk.similarity * 100).toFixed(0)}%
-                    <p style={{ fontStyle: 'italic' }}>&quot;{chunk.chunk_text}&quot;</p>
+        {ticket.status !== 'resolved' && (
+          <>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-5 h-5 rounded-md bg-ai/20 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-ai" />
+              </div>
+              <p className="text-xs font-medium text-ai uppercase tracking-wide">AI Suggested Reply</p>
+            </div>
+
+            {loadingSuggestion && (
+              <div className="glow-ai rounded-xl p-5 mb-6 bg-surface text-text-muted text-sm">
+                Generating suggestion...
+              </div>
+            )}
+
+            {suggestion && (
+              <div className="glow-ai rounded-xl p-5 mb-6 bg-surface">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">{suggestion.suggested_text}</p>
+
+                <button
+                  onClick={() => setShowSources(!showSources)}
+                  className="text-xs text-ai hover:text-ai/80 transition mt-4 font-medium inline-flex items-center gap-1"
+                >
+                  {showSources ? '▼' : '▶'} View sources ({suggestion.retrieved_chunks?.length || 0})
+                </button>
+
+                {showSources && (
+                  <div className="mt-3 space-y-3 border-t border-border pt-3">
+                    {suggestion.retrieved_chunks?.map((chunk) => (
+                      <div key={chunk.id} className="text-xs">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-text">
+                            {chunk.title} <span className="text-text-muted font-normal">({chunk.category})</span>
+                          </span>
+                          <span className="font-mono text-ai">{(chunk.similarity * 100).toFixed(0)}%</span>
+                        </div>
+                        <p className="text-text-muted italic">&quot;{chunk.chunk_text}&quot;</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </details>
+                )}
 
-              {!feedbackGiven && (
-                <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-                  <button onClick={() => handleFeedback('accepted')} style={{ padding: '8px 16px' }}>
-                    ✓ Accept
-                  </button>
-                  <button
-                    onClick={() => {
-                      setReply(suggestion.suggested_text)
-                      handleFeedback('edited')
-                    }}
-                    style={{ padding: '8px 16px' }}
-                  >
-                    ✎ Edit
-                  </button>
-                  <button onClick={() => handleFeedback('rejected')} style={{ padding: '8px 16px' }}>
-                    ✕ Reject
-                  </button>
+                {!feedbackGiven && (
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => handleFeedback('accepted')}
+                      className="text-sm px-3 py-1.5 rounded-lg bg-success/10 text-success border border-success/20 hover:bg-success/20 transition"
+                    >
+                      ✓ Accept
+                    </button>
+                    <button
+                      onClick={() => {
+                        setReply(suggestion.suggested_text)
+                        handleFeedback('edited')
+                      }}
+                      className="text-sm px-3 py-1.5 rounded-lg bg-warning/10 text-warning border border-warning/20 hover:bg-warning/20 transition"
+                    >
+                      ✎ Edit
+                    </button>
+                    <button
+                      onClick={() => handleFeedback('rejected')}
+                      className="text-sm px-3 py-1.5 rounded-lg bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20 transition"
+                    >
+                      ✕ Reject
+                    </button>
+                  </div>
+                )}
+                {feedbackGiven && (
+                  <p className="text-xs text-success mt-4 font-medium">✓ Feedback recorded: {feedbackGiven}</p>
+                )}
+              </div>
+            )}
+
+            <form onSubmit={handleSendReply} className="glass-card rounded-xl p-5">
+              <label className="block text-sm font-medium mb-2 text-text-muted">Your reply</label>
+              <textarea
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+                required
+                rows={5}
+                className="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-border text-text placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition resize-none text-sm"
+                placeholder="Write your reply..."
+              />
+              {error && (
+                <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-lg px-3 py-2 mt-3">
+                  {error}
                 </div>
               )}
-              {feedbackGiven && <p style={{ color: 'lightgreen', marginTop: '8px' }}>Feedback recorded ✓</p>}
-            </div>
-          )}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-5 py-2.5 rounded-lg bg-primary hover:bg-primary-hover transition font-medium disabled:opacity-50 mt-3"
+              >
+                {submitting ? 'Sending...' : 'Send Reply & Resolve'}
+              </button>
+            </form>
+          </>
+        )}
 
-          <form onSubmit={handleSendReply} style={{ marginTop: '20px' }}>
-            <label>Your reply</label>
-            <textarea
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              required
-              rows={5}
-              style={{ width: '100%', padding: '8px' }}
-            />
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            <button type="submit" disabled={submitting} style={{ padding: '10px 20px', marginTop: '8px' }}>
-              {submitting ? 'Sending...' : 'Send Reply & Resolve'}
-            </button>
-          </form>
-        </>
-      )}
-
-      {ticket.status === 'resolved' && <p style={{ color: 'lightgreen' }}>✅ Ticket resolved</p>}
+        {ticket.status === 'resolved' && (
+          <div className="glass-card rounded-xl p-5 text-success text-sm font-medium">
+            ✓ Ticket resolved
+          </div>
+        )}
+      </main>
     </div>
   )
 }
