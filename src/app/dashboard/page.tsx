@@ -14,6 +14,12 @@ type Ticket = {
   created_at: string
 }
 
+const statusStyles: Record<string, string> = {
+  open: 'bg-warning/10 text-warning border-warning/20',
+  in_progress: 'bg-primary/10 text-primary border-primary/20',
+  resolved: 'bg-success/10 text-success border-success/20',
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
@@ -83,63 +89,97 @@ export default function DashboardPage() {
     router.push('/login')
   }
 
-  if (!user) return <p style={{ padding: '40px' }}>Loading...</p>
+  if (!user) return <div className="flex-1 flex items-center justify-center text-text-muted">Loading...</div>
 
   return (
-    <div style={{ padding: '40px', fontFamily: 'sans-serif', maxWidth: '700px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>My Tickets</h1>
-        <button onClick={handleLogout} style={{ padding: '8px 16px' }}>
-          Log Out
-        </button>
-      </div>
-      <p>Logged in as: {user.email}</p>
+    <div className="flex-1 flex flex-col">
+      <header className="border-b border-border">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-mono font-bold text-sm">
+              R
+            </div>
+            <span className="font-semibold">ResolveAI</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-text-muted">{user.email}</span>
+            <button
+              onClick={handleLogout}
+              className="text-sm px-3 py-1.5 rounded-lg border border-border hover:bg-surface-hover transition"
+            >
+              Log Out
+            </button>
+          </div>
+        </div>
+      </header>
 
-      <h2 style={{ marginTop: '32px' }}>Create New Ticket</h2>
-      <form onSubmit={handleCreateTicket} style={{ marginBottom: '32px' }}>
-        <div style={{ marginBottom: '12px' }}>
-          <label>Subject</label>
-          <input
-            type="text"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
-        <div style={{ marginBottom: '12px' }}>
-          <label>Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-            rows={4}
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit" disabled={submitting} style={{ padding: '10px 20px' }}>
-          {submitting ? 'Submitting...' : 'Submit Ticket'}
-        </button>
-      </form>
+      <main className="max-w-4xl mx-auto w-full px-6 py-10 flex-1">
+        <h1 className="text-2xl font-semibold mb-1">My Tickets</h1>
+        <p className="text-text-muted mb-8">Submit a request and track its status here.</p>
 
-      <h2>My Tickets ({tickets.length})</h2>
-      {tickets.length === 0 && <p>No tickets yet.</p>}
-      {tickets.map((ticket) => (
-        <div
-          key={ticket.id}
-          style={{
-            border: '1px solid #444',
-            borderRadius: '8px',
-            padding: '16px',
-            marginBottom: '12px',
-          }}
-        >
-          <strong>{ticket.subject}</strong> — <em>{ticket.status}</em>
-          <p>{ticket.description}</p>
-          <small>{new Date(ticket.created_at).toLocaleString()}</small>
+        <form onSubmit={handleCreateTicket} className="glass-card rounded-2xl p-6 mb-10 space-y-4">
+          <h2 className="font-medium">New Ticket</h2>
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-text-muted">Subject</label>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              required
+              className="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-border text-text placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
+              placeholder="Brief summary of the issue"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-text-muted">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+              rows={4}
+              className="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-border text-text placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition resize-none"
+              placeholder="Describe what's going on in detail..."
+            />
+          </div>
+          {error && (
+            <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">
+              {error}
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="px-5 py-2.5 rounded-lg bg-primary hover:bg-primary-hover transition font-medium disabled:opacity-50"
+          >
+            {submitting ? 'Submitting...' : 'Submit Ticket'}
+          </button>
+        </form>
+
+        <h2 className="font-medium mb-4">Your Tickets ({tickets.length})</h2>
+        {tickets.length === 0 && (
+          <div className="glass-card rounded-2xl p-8 text-center text-text-muted">
+            No tickets yet. Submit one above to get started.
+          </div>
+        )}
+        <div className="space-y-3">
+          {tickets.map((ticket) => (
+            <div key={ticket.id} className="glass-card rounded-xl p-5">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium">{ticket.subject}</h3>
+                <span
+                  className={`text-xs font-medium px-2.5 py-1 rounded-full border capitalize ${statusStyles[ticket.status] || ''}`}
+                >
+                  {ticket.status.replace('_', ' ')}
+                </span>
+              </div>
+              <p className="text-sm text-text-muted mb-2">{ticket.description}</p>
+              <p className="text-xs text-text-muted font-mono">
+                {new Date(ticket.created_at).toLocaleString()}
+              </p>
+            </div>
+          ))}
         </div>
-      ))}
+      </main>
     </div>
   )
 }
