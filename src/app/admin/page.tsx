@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
+import NavBar from '@/components/NavBar'
 
 type Stats = {
   totalTickets: number
@@ -42,10 +43,7 @@ export default function AdminDashboard() {
 
       setUser(authData.user)
 
-      const { data: tickets, error: ticketError } = await supabase
-        .from('tickets')
-        .select('status')
-
+      const { data: tickets, error: ticketError } = await supabase.from('tickets').select('status')
       if (ticketError) {
         setError(ticketError.message)
         return
@@ -54,7 +52,6 @@ export default function AdminDashboard() {
       const { data: feedback, error: feedbackError } = await supabase
         .from('agent_feedback')
         .select('outcome')
-
       if (feedbackError) {
         setError(feedbackError.message)
         return
@@ -85,76 +82,67 @@ export default function AdminDashboard() {
     load()
   }, [router])
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
-
-  if (!user || !stats) return <p style={{ padding: '40px' }}>Loading...</p>
+  if (!user || !stats) return <div className="flex-1 flex items-center justify-center text-text-muted">Loading...</div>
 
   const totalFeedback = stats.accepted + stats.edited + stats.rejected
   const acceptRate = totalFeedback > 0 ? ((stats.accepted / totalFeedback) * 100).toFixed(1) : '0'
   const editRate = totalFeedback > 0 ? ((stats.edited / totalFeedback) * 100).toFixed(1) : '0'
   const rejectRate = totalFeedback > 0 ? ((stats.rejected / totalFeedback) * 100).toFixed(1) : '0'
 
-  const cardStyle = {
-    border: '1px solid #444',
-    borderRadius: '8px',
-    padding: '20px',
-    flex: 1,
-    minWidth: '160px',
-  }
-
   return (
-    <div style={{ padding: '40px', fontFamily: 'sans-serif', maxWidth: '900px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Admin Analytics</h1>
-        <button onClick={handleLogout} style={{ padding: '8px 16px' }}>
-          Log Out
-        </button>
-      </div>
-      <p>Logged in as: {user.email}</p>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="flex-1 flex flex-col">
+      <NavBar role="admin" email={user.email || ''} />
 
-      <h2 style={{ marginTop: '32px' }}>Ticket Overview</h2>
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-        <div style={cardStyle}>
-          <div style={{ fontSize: '2em', fontWeight: 'bold' }}>{stats.totalTickets}</div>
-          <div>Total Tickets</div>
-        </div>
-        <div style={cardStyle}>
-          <div style={{ fontSize: '2em', fontWeight: 'bold' }}>{stats.openTickets}</div>
-          <div>Open</div>
-        </div>
-        <div style={cardStyle}>
-          <div style={{ fontSize: '2em', fontWeight: 'bold' }}>{stats.resolvedTickets}</div>
-          <div>Resolved</div>
-        </div>
-      </div>
+      <main className="max-w-4xl mx-auto w-full px-6 py-10 flex-1">
+        <h1 className="text-2xl font-semibold mb-1">Admin Analytics</h1>
+        <p className="text-text-muted mb-8">Overview of ticket volume and AI performance.</p>
 
-      <h2 style={{ marginTop: '32px' }}>AI Performance</h2>
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-        <div style={cardStyle}>
-          <div style={{ fontSize: '2em', fontWeight: 'bold' }}>{stats.totalSuggestions}</div>
-          <div>Suggestions Generated</div>
-        </div>
-        <div style={cardStyle}>
-          <div style={{ fontSize: '2em', fontWeight: 'bold', color: 'lightgreen' }}>{acceptRate}%</div>
-          <div>Accepted ({stats.accepted})</div>
-        </div>
-        <div style={cardStyle}>
-          <div style={{ fontSize: '2em', fontWeight: 'bold', color: 'orange' }}>{editRate}%</div>
-          <div>Edited ({stats.edited})</div>
-        </div>
-        <div style={cardStyle}>
-          <div style={{ fontSize: '2em', fontWeight: 'bold', color: 'salmon' }}>{rejectRate}%</div>
-          <div>Rejected ({stats.rejected})</div>
-        </div>
-      </div>
+        {error && (
+          <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-lg px-3 py-2 mb-6">
+            {error}
+          </div>
+        )}
 
-      <p style={{ marginTop: '32px', color: '#888' }}>
-        Acceptance rate reflects how often agents used the AI-suggested reply as-is, indicating retrieval and generation quality.
-      </p>
+        <h2 className="text-sm font-medium text-text-muted uppercase tracking-wide mb-3">Ticket Overview</h2>
+        <div className="grid grid-cols-3 gap-4 mb-10">
+          <div className="glass-card rounded-xl p-5">
+            <div className="text-3xl font-semibold font-mono">{stats.totalTickets}</div>
+            <div className="text-sm text-text-muted mt-1">Total Tickets</div>
+          </div>
+          <div className="glass-card rounded-xl p-5">
+            <div className="text-3xl font-semibold font-mono text-warning">{stats.openTickets}</div>
+            <div className="text-sm text-text-muted mt-1">Open</div>
+          </div>
+          <div className="glass-card rounded-xl p-5">
+            <div className="text-3xl font-semibold font-mono text-success">{stats.resolvedTickets}</div>
+            <div className="text-sm text-text-muted mt-1">Resolved</div>
+          </div>
+        </div>
+
+        <h2 className="text-sm font-medium text-text-muted uppercase tracking-wide mb-3">AI Performance</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="glass-card rounded-xl p-5">
+            <div className="text-3xl font-semibold font-mono">{stats.totalSuggestions}</div>
+            <div className="text-sm text-text-muted mt-1">Suggestions</div>
+          </div>
+          <div className="glow-ai rounded-xl p-5 bg-surface">
+            <div className="text-3xl font-semibold font-mono text-success">{acceptRate}%</div>
+            <div className="text-sm text-text-muted mt-1">Accepted ({stats.accepted})</div>
+          </div>
+          <div className="glass-card rounded-xl p-5">
+            <div className="text-3xl font-semibold font-mono text-warning">{editRate}%</div>
+            <div className="text-sm text-text-muted mt-1">Edited ({stats.edited})</div>
+          </div>
+          <div className="glass-card rounded-xl p-5">
+            <div className="text-3xl font-semibold font-mono text-danger">{rejectRate}%</div>
+            <div className="text-sm text-text-muted mt-1">Rejected ({stats.rejected})</div>
+          </div>
+        </div>
+
+        <p className="text-sm text-text-muted mt-8">
+          Acceptance rate reflects how often agents used the AI-suggested reply as-is, indicating retrieval and generation quality.
+        </p>
+      </main>
     </div>
   )
-}   
+}

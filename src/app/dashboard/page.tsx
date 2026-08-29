@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
+import NavBar from '@/components/NavBar'
 
 type Ticket = {
   id: string
@@ -109,25 +110,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <header className="border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-mono font-bold text-sm">
-              R
-            </div>
-            <span className="font-semibold">ResolveAI</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-text-muted">{user.email}</span>
-            <button
-              onClick={handleLogout}
-              className="text-sm px-3 py-1.5 rounded-lg border border-border hover:bg-surface-hover transition"
-            >
-              Log Out
-            </button>
-          </div>
-        </div>
-      </header>
+            <NavBar role="customer" email={user.email || ''} />
 
       <main className="max-w-4xl mx-auto w-full px-6 py-10 flex-1">
         <h1 className="text-2xl font-semibold mb-1">My Tickets</h1>
