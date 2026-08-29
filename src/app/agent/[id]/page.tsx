@@ -22,6 +22,21 @@ type Message = {
   created_at: string
 }
 
+type RetrievedChunk = {
+  id: string
+  title: string
+  category: string
+  chunk_text: string
+  similarity: number
+}
+
+type Suggestion = {
+  id: string
+  suggested_text: string
+  retrieved_chunks: RetrievedChunk[]
+  model_used: string
+}
+
 export default function AgentTicketDetail() {
   const router = useRouter()
   const params = useParams()
@@ -33,6 +48,10 @@ export default function AgentTicketDetail() {
   const [reply, setReply] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null)
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false)
+  const [feedbackGiven, setFeedbackGiven] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -62,9 +81,61 @@ export default function AgentTicketDetail() {
         .order('created_at', { ascending: true })
 
       setMessages(messageData || [])
+
+      // Check if a suggestion already exists for this ticket
+      const { data: existingSuggestion } = await supabase
+        .from('ai_suggestions')
+        .select('*')
+        .eq('ticket_id', ticketId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (existingSuggestion) {
+        setSuggestion(existingSuggestion)
+      } else if (ticketData.status !== 'resolved') {
+        // Auto-generate a suggestion on first open
+        generateSuggestion(ticketData.description)
+      }
     }
     load()
   }, [ticketId, router])
+
+  async function generateSuggestion(customerMessage: string) {
+    setLoadingSuggestion(true)
+    try {
+      const response = await fetch('/api/generate-suggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId, customerMessage }),
+      })
+      const data = await response.json()
+      if (data.suggestion) {
+        setSuggestion(data.suggestion)
+      }
+    } catch (err) {
+      console.error('Failed to generate suggestion', err)
+    } finally {
+      setLoadingSuggestion(false)
+    }
+  }
+
+  async function handleFeedback(outcome: 'accepted' | 'edited' | 'rejected') {
+    if (!user || !suggestion) return
+
+    await supabase.from('agent_feedback').insert({
+      ai_suggestion_id: suggestion.id,
+      agent_id: user.id,
+      outcome,
+      final_text: reply || suggestion.suggested_text,
+    })
+
+    setFeedbackGiven(true)
+
+    if (outcome === 'accepted') {
+      setReply(suggestion.suggested_text)
+    }
+  }
 
   async function handleSendReply(e: React.FormEvent) {
     e.preventDefault()
@@ -114,7 +185,7 @@ export default function AgentTicketDetail() {
       <p><em>Status: {ticket.status}</em> — <em>Priority: {ticket.priority}</em></p>
 
       <div style={{ border: '1px solid #444', borderRadius: '8px', padding: '16px', marginBottom: '20px' }}>
-        <strong>Customer's original message:</strong>
+        <strong>Customer&apos;s original message:</strong>
         <p>{ticket.description}</p>
       </div>
 
@@ -134,20 +205,65 @@ export default function AgentTicketDetail() {
       ))}
 
       {ticket.status !== 'resolved' && (
-        <form onSubmit={handleSendReply} style={{ marginTop: '20px' }}>
-          <label>Your reply</label>
-          <textarea
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            required
-            rows={4}
-            style={{ width: '100%', padding: '8px' }}
-          />
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <button type="submit" disabled={submitting} style={{ padding: '10px 20px', marginTop: '8px' }}>
-            {submitting ? 'Sending...' : 'Send Reply & Resolve'}
-          </button>
-        </form>
+        <>
+          <h3 style={{ marginTop: '24px' }}>🤖 AI Suggested Reply</h3>
+
+          {loadingSuggestion && <p>Generating suggestion...</p>}
+
+          {suggestion && (
+            <div style={{ border: '1px solid #4a7cff', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{suggestion.suggested_text}</p>
+
+              <details style={{ marginTop: '12px' }}>
+                <summary style={{ cursor: 'pointer', color: '#4a7cff' }}>
+                  View sources ({suggestion.retrieved_chunks?.length || 0})
+                </summary>
+                {suggestion.retrieved_chunks?.map((chunk) => (
+                  <div key={chunk.id} style={{ marginTop: '8px', fontSize: '0.9em', color: '#aaa' }}>
+                    <strong>{chunk.title}</strong> ({chunk.category}) — similarity: {(chunk.similarity * 100).toFixed(0)}%
+                    <p style={{ fontStyle: 'italic' }}>&quot;{chunk.chunk_text}&quot;</p>
+                  </div>
+                ))}
+              </details>
+
+              {!feedbackGiven && (
+                <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+                  <button onClick={() => handleFeedback('accepted')} style={{ padding: '8px 16px' }}>
+                    ✓ Accept
+                  </button>
+                  <button
+                    onClick={() => {
+                      setReply(suggestion.suggested_text)
+                      handleFeedback('edited')
+                    }}
+                    style={{ padding: '8px 16px' }}
+                  >
+                    ✎ Edit
+                  </button>
+                  <button onClick={() => handleFeedback('rejected')} style={{ padding: '8px 16px' }}>
+                    ✕ Reject
+                  </button>
+                </div>
+              )}
+              {feedbackGiven && <p style={{ color: 'lightgreen', marginTop: '8px' }}>Feedback recorded ✓</p>}
+            </div>
+          )}
+
+          <form onSubmit={handleSendReply} style={{ marginTop: '20px' }}>
+            <label>Your reply</label>
+            <textarea
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              required
+              rows={5}
+              style={{ width: '100%', padding: '8px' }}
+            />
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+            <button type="submit" disabled={submitting} style={{ padding: '10px 20px', marginTop: '8px' }}>
+              {submitting ? 'Sending...' : 'Send Reply & Resolve'}
+            </button>
+          </form>
+        </>
       )}
 
       {ticket.status === 'resolved' && <p style={{ color: 'lightgreen' }}>✅ Ticket resolved</p>}
