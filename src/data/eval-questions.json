@@ -1,0 +1,42 @@
+[
+  {
+    "question": "I was charged twice, can I get a refund?",
+    "expected_topic": "Refund Policy"
+  },
+  {
+    "question": "How do I cancel my subscription?",
+    "expected_topic": "Subscription Cancellation"
+  },
+  {
+    "question": "My card payment failed, what happens now?",
+    "expected_topic": "Failed Payments"
+  },
+  {
+    "question": "How do I authenticate with the API?",
+    "expected_topic": "API Authentication"
+  },
+  {
+    "question": "I'm getting a 429 error from the API",
+    "expected_topic": "API Rate Limits"
+  },
+  {
+    "question": "What does a 403 error mean?",
+    "expected_topic": "API Error Codes"
+  },
+  {
+    "question": "How do webhooks work?",
+    "expected_topic": "Webhooks"
+  },
+  {
+    "question": "How many team members can I add on the free plan?",
+    "expected_topic": "Account Setup"
+  },
+  {
+    "question": "Can an admin delete the workspace?",
+    "expected_topic": "Permissions"
+  },
+  {
+    "question": "My Slack integration stopped working",
+    "expected_topic": "Integrations"
+  }
+]
