@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
+import NavBar from '@/components/NavBar'
 
 type Ticket = {
   id: string
@@ -189,13 +190,12 @@ export default function AgentTicketDetail() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <header className="border-b border-border">
-        <div className="max-w-3xl mx-auto px-6 py-4">
-          <Link href="/agent" className="text-sm text-text-muted hover:text-text transition inline-flex items-center gap-1.5">
-            ← Back to queue
-          </Link>
-        </div>
-      </header>
+      <NavBar role="agent" email={user?.email || ''} />
+      <div className="max-w-3xl mx-auto w-full px-6 pt-6">
+        <Link href="/agent" className="text-sm text-text-muted hover:text-text transition inline-flex items-center gap-1.5">
+          ← Back to queue
+        </Link>
+      </div>
 
       <main className="max-w-3xl mx-auto w-full px-6 py-10 flex-1">
         <div className="flex items-center justify-between mb-2 gap-3">
