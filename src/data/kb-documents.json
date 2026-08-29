@@ -1,0 +1,62 @@
+[
+  {
+    "title": "Refund Policy",
+    "category": "Billing",
+    "content": "NovaDesk offers refunds for subscription charges under specific conditions. If you were charged in error, or if you cancel within 14 days of a new subscription purchase, you are eligible for a full refund. Refund requests must be submitted through the billing section of your account or by contacting support. Once approved, refunds typically appear on your original payment method within 5-7 business days. Refunds are not available for renewal charges after the initial 14-day window, but you can cancel to prevent future billing. Annual plans cancelled after 30 days are eligible for a prorated refund of unused months, minus a 10% processing fee."
+  },
+  {
+    "title": "Subscription Cancellation",
+    "category": "Billing",
+    "content": "You can cancel your NovaDesk subscription at any time from Account Settings > Billing > Cancel Subscription. Cancelling stops future charges but does not immediately revoke access; you retain full access until the end of your current billing period. After that, your account is downgraded to the Free tier, and any data exceeding Free tier limits (such as extra team members or storage) becomes read-only until you either upgrade again or reduce usage. Cancellation does not automatically delete your account or data."
+  },
+  {
+    "title": "Failed Payments",
+    "category": "Billing",
+    "content": "If a subscription payment fails, NovaDesk will automatically retry the charge up to 3 times over 7 days. You will receive an email notification after each failed attempt. During this retry period, your account remains active. If all retries fail, your account is downgraded to Free tier and you'll need to update your payment method and manually resubscribe. Common causes of failed payments include expired cards, insufficient funds, or your bank flagging the transaction as suspicious. Updating your card in Account Settings > Billing > Payment Method before the next retry usually resolves the issue."
+  },
+  {
+    "title": "Invoice FAQ",
+    "category": "Billing",
+    "content": "Invoices for all NovaDesk subscriptions are automatically generated and emailed to the account owner on the billing date. You can also download past invoices from Account Settings > Billing > Invoice History. Invoices include your plan name, billing period, amount charged, and payment method used. If you need to add a company name, tax ID, or billing address to your invoices, this can be updated under Account Settings > Billing > Invoice Details before your next billing cycle; changes do not apply retroactively to past invoices."
+  },
+  {
+    "title": "API Authentication",
+    "category": "API",
+    "content": "NovaDesk's API uses API key authentication. Generate a key from Account Settings > Developer > API Keys. Include your key in the Authorization header as 'Bearer YOUR_API_KEY' on every request. API keys are scoped to your account and inherit your account's plan permissions. Never share your API key publicly or commit it to version control, as anyone with the key has full access to your account's data via the API. If a key is compromised, revoke it immediately from the same settings page and generate a new one; revoking a key takes effect within seconds."
+  },
+  {
+    "title": "API Rate Limits",
+    "category": "API",
+    "content": "NovaDesk enforces rate limits to ensure platform stability. Free tier accounts are limited to 100 requests per minute; Pro tier accounts get 1,000 requests per minute; Enterprise accounts have custom limits negotiated with our team. If you exceed your rate limit, the API returns a 429 status code along with a Retry-After header indicating how many seconds to wait before retrying. We recommend implementing exponential backoff in your integration to handle rate limiting gracefully rather than retrying immediately."
+  },
+  {
+    "title": "API Error Codes",
+    "category": "API",
+    "content": "NovaDesk's API returns standard HTTP status codes. A 400 indicates a malformed request, usually a missing or invalid parameter. A 401 means your API key is missing, invalid, or expired. A 403 means your key is valid but lacks permission for that action, often due to plan restrictions. A 404 means the requested resource doesn't exist. A 429 indicates you've hit a rate limit. A 500 indicates a server-side issue on our end; if you see repeated 500 errors, check our status page or contact support with the request ID from the error response."
+  },
+  {
+    "title": "Webhooks",
+    "category": "API",
+    "content": "NovaDesk supports webhooks to notify your application of events like ticket creation, status changes, or payment failures. Configure webhook URLs in Account Settings > Developer > Webhooks. Each webhook payload includes an event type, timestamp, and relevant data object. We recommend verifying webhook authenticity using the signature included in the X-NovaDesk-Signature header to prevent spoofed requests. If your endpoint doesn't return a 200 status within 10 seconds, NovaDesk will retry delivery up to 5 times with exponential backoff before marking the webhook as failed."
+  },
+  {
+    "title": "Account Setup",
+    "category": "Product",
+    "content": "To get started with NovaDesk, sign up with your work email and verify your account via the confirmation email. Once verified, you'll be guided through initial setup: naming your workspace, inviting team members, and choosing a plan. Free tier accounts can invite up to 3 team members; Pro and Enterprise tiers support unlimited members. Your workspace URL is customizable under Account Settings > General, but changing it after sharing links with customers may break existing bookmarks."
+  },
+  {
+    "title": "Team Management",
+    "category": "Product",
+    "content": "Workspace owners and admins can manage team members from Account Settings > Team. You can invite new members by email, assign roles (Member, Admin, Owner), and remove members who no longer need access. Only Owners can transfer ownership of the workspace or delete it entirely. Admins can manage billing and invite members but cannot delete the workspace. Removing a team member immediately revokes their access but preserves their historical activity in the system for audit purposes."
+  },
+  {
+    "title": "Permissions",
+    "category": "Product",
+    "content": "NovaDesk uses role-based permissions across three levels: Owner, Admin, and Member. Owners have full control including billing, deletion, and ownership transfer. Admins can manage team members, billing, and most settings, but cannot delete the workspace or transfer ownership. Members can use core product features (creating tickets, viewing dashboards) but cannot access billing or invite new team members unless explicitly granted an elevated permission by an Admin or Owner."
+  },
+  {
+    "title": "Integrations",
+    "category": "Product",
+    "content": "NovaDesk integrates with common tools including Slack, Zapier, and Google Workspace. Slack integration posts notifications for new tickets and status changes to a channel of your choice, configured under Account Settings > Integrations > Slack. Zapier integration lets you connect NovaDesk to thousands of other apps without code. If an integration stops working, the most common cause is an expired or revoked authorization token; reconnecting the integration from the same settings page typically resolves this."
+  }
+]
