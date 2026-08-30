@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Groq from 'groq-sdk'
+import { detectCategory } from '@/lib/rag-utils'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,23 +57,6 @@ export async function POST(req: NextRequest) {
     const queryEmbedding = await getEmbedding(fullContext)
 
         // 2. Guess the likely category using simple keyword matching
-    function detectCategory(text: string): string | null {
-      const lower = text.toLowerCase()
-      const billingKeywords = ['charge', 'refund', 'invoice', 'payment', 'subscription', 'bill', 'cancel', 'price', 'cost']
-      const apiKeywords = ['api', 'error', 'rate limit', '429', '401', '403', '404', '500', 'webhook', 'authentication', 'endpoint', 'request']
-      const productKeywords = ['team', 'member', 'permission', 'account', 'workspace', 'integration', 'slack', 'setup', 'admin', 'role']
-
-      const billingScore = billingKeywords.filter((k) => lower.includes(k)).length
-      const apiScore = apiKeywords.filter((k) => lower.includes(k)).length
-      const productScore = productKeywords.filter((k) => lower.includes(k)).length
-
-      const max = Math.max(billingScore, apiScore, productScore)
-      if (max === 0) return null // no strong signal, don't filter
-
-      if (billingScore === max) return 'Billing'
-      if (apiScore === max) return 'API'
-      return 'Product'
-    }
 
     const detectedCategory = detectCategory(customerMessage)
 

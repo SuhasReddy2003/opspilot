@@ -34,18 +34,7 @@ async function getEmbedding(text: string): Promise<number[]> {
   return result as number[]
 }
 
-function chunkText(text: string, maxSentencesPerChunk: number = 2): string[] {
-  const sentences = text.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0)
-  const chunks: string[] = []
-
-  for (let i = 0; i < sentences.length; i += maxSentencesPerChunk) {
-    const chunk = sentences.slice(i, i + maxSentencesPerChunk).join(' ').trim()
-    if (chunk.length > 0) {
-      chunks.push(chunk)
-    }
-  }
-  return chunks
-}
+import { chunkText } from '../src/lib/rag-utils'
 
 async function seed() {
   console.log(`Seeding ${documents.length} documents...`)
