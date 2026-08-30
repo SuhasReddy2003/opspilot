@@ -40,17 +40,39 @@ export async function POST(req: NextRequest) {
     // 1. Embed the customer's message
     const queryEmbedding = await getEmbedding(customerMessage)
 
-    // 2. Vector search for relevant chunks
-    const { data: matches, error: matchError } = await supabase.rpc('match_document_chunks', {
+        // 2. Guess the likely category using simple keyword matching
+    function detectCategory(text: string): string | null {
+      const lower = text.toLowerCase()
+      const billingKeywords = ['charge', 'refund', 'invoice', 'payment', 'subscription', 'bill', 'cancel', 'price', 'cost']
+      const apiKeywords = ['api', 'error', 'rate limit', '429', '401', '403', '404', '500', 'webhook', 'authentication', 'endpoint', 'request']
+      const productKeywords = ['team', 'member', 'permission', 'account', 'workspace', 'integration', 'slack', 'setup', 'admin', 'role']
+
+      const billingScore = billingKeywords.filter((k) => lower.includes(k)).length
+      const apiScore = apiKeywords.filter((k) => lower.includes(k)).length
+      const productScore = productKeywords.filter((k) => lower.includes(k)).length
+
+      const max = Math.max(billingScore, apiScore, productScore)
+      if (max === 0) return null // no strong signal, don't filter
+
+      if (billingScore === max) return 'Billing'
+      if (apiScore === max) return 'API'
+      return 'Product'
+    }
+
+    const detectedCategory = detectCategory(customerMessage)
+
+    // 3. Vector search for relevant chunks, filtered by detected category when confident
+    const { data: matches, error: matchError } = await supabase.rpc('match_document_chunks_filtered', {
       query_embedding: queryEmbedding,
       match_count: 3,
+      filter_category: detectedCategory,
     })
 
     if (matchError) {
       return NextResponse.json({ error: matchError.message }, { status: 500 })
     }
 
-    // 3. Build context from retrieved chunks
+    
     const context = (matches || [])
       .map((m: { chunk_text: string }, i: number) => `[Source ${i + 1}]: ${m.chunk_text}`)
       .join('\n\n')

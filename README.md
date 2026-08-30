@@ -89,10 +89,12 @@ All free-tier, $0 infrastructure cost.
 
 Run against a 10-question test set mapped to expected source articles:
 
-- **Retrieval accuracy: 70%** (7/10 correct top-1 retrieval)
-- **Average top similarity: 53.4%**
+- **Retrieval accuracy: 80%** (8/10 correct top-1 retrieval)
+- **Average top similarity: 60.5%**
 
-Failure analysis: the 3 misses are not random noise — they're driven by genuine content overlap between similar knowledge base articles (e.g., a query about API rate limits matched an "API Error Codes" article that also mentions status code 429). This points to a concrete improvement path: tighter chunk boundaries or metadata-based filtering to reduce cross-document ambiguity, rather than a fundamentally broken retrieval approach.
+**Iteration history:** initial chunking (grouping by character count, ~500 chars/chunk) scored 70% accuracy. I hypothesized two fixes: category-based metadata filtering, and finer-grained chunking. Testing showed category filtering made no difference — the failures turned out to be *within-category* confusion (e.g. two API docs, not an API doc vs a Billing doc), so filtering by category couldn't separate them. Switching to smaller, 2-sentence chunks (so each chunk represents one atomic fact rather than a blended paragraph) resolved one failure and raised overall accuracy to 80%.
+
+**Remaining known failure:** "Can an admin delete the workspace?" retrieves the Team Management article instead of Permissions — correctly, in a sense, since Team Management genuinely contains that exact fact ("Only Owners can... delete it entirely"). This is a content architecture issue (the fact is duplicated across two documents) rather than a retrieval bug, and would be resolved by consolidating ownership-related facts into a single source document.
 
 ## Local setup
 

@@ -25,22 +25,43 @@ async function getEmbedding(text: string): Promise<number[]> {
   return response.json()
 }
 
+function detectCategory(text: string): string | null {
+  const lower = text.toLowerCase()
+  const billingKeywords = ['charge', 'refund', 'invoice', 'payment', 'subscription', 'bill', 'cancel', 'price', 'cost']
+  const apiKeywords = ['api', 'error', 'rate limit', '429', '401', '403', '404', '500', 'webhook', 'authentication', 'endpoint', 'request']
+  const productKeywords = ['team', 'member', 'permission', 'account', 'workspace', 'integration', 'slack', 'setup', 'admin', 'role']
+
+  const billingScore = billingKeywords.filter((k) => lower.includes(k)).length
+  const apiScore = apiKeywords.filter((k) => lower.includes(k)).length
+  const productScore = productKeywords.filter((k) => lower.includes(k)).length
+
+  const max = Math.max(billingScore, apiScore, productScore)
+  if (max === 0) return null
+
+  if (billingScore === max) return 'Billing'
+  if (apiScore === max) return 'API'
+  return 'Product'
+}
+
 export async function GET() {
   const results = []
 
   for (const item of evalQuestions) {
     try {
       const embedding = await getEmbedding(item.question)
+      const detectedCategory = detectCategory(item.question)
 
-      const { data: matches, error } = await supabase.rpc('match_document_chunks', {
+      const { data: matches, error } = await supabase.rpc('match_document_chunks_filtered', {
         query_embedding: embedding,
         match_count: 3,
+        filter_category: detectedCategory,
       })
 
       if (error) {
         results.push({
           question: item.question,
           expected_topic: item.expected_topic,
+          detected_category: detectedCategory,
           top_result: null,
           top_similarity: 0,
           correct: false,
@@ -55,6 +76,7 @@ export async function GET() {
       results.push({
         question: item.question,
         expected_topic: item.expected_topic,
+        detected_category: detectedCategory,
         top_result: topMatch?.title || null,
         top_similarity: topMatch?.similarity || 0,
         correct,
@@ -63,6 +85,7 @@ export async function GET() {
       results.push({
         question: item.question,
         expected_topic: item.expected_topic,
+        detected_category: null,
         top_result: null,
         top_similarity: 0,
         correct: false,

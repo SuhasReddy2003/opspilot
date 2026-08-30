@@ -34,21 +34,15 @@ async function getEmbedding(text: string): Promise<number[]> {
   return result as number[]
 }
 
-function chunkText(text: string, maxChunkLength: number = 500): string[] {
-  const sentences = text.split(/(?<=[.!?])\s+/)
+function chunkText(text: string, maxSentencesPerChunk: number = 2): string[] {
+  const sentences = text.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0)
   const chunks: string[] = []
-  let currentChunk = ''
 
-  for (const sentence of sentences) {
-    if ((currentChunk + sentence).length > maxChunkLength && currentChunk.length > 0) {
-      chunks.push(currentChunk.trim())
-      currentChunk = sentence
-    } else {
-      currentChunk += ' ' + sentence
+  for (let i = 0; i < sentences.length; i += maxSentencesPerChunk) {
+    const chunk = sentences.slice(i, i + maxSentencesPerChunk).join(' ').trim()
+    if (chunk.length > 0) {
+      chunks.push(chunk)
     }
-  }
-  if (currentChunk.trim().length > 0) {
-    chunks.push(currentChunk.trim())
   }
   return chunks
 }
