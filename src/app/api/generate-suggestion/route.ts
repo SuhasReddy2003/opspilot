@@ -37,8 +37,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing ticketId or customerMessage' }, { status: 400 })
     }
 
+    // Pull the full conversation so far, so context isn't limited to the first message
+    const { data: priorMessages } = await supabase
+      .from('messages')
+      .select('sender_role, content')
+      .eq('ticket_id', ticketId)
+      .order('created_at', { ascending: true })
+
+    const conversationHistory = (priorMessages || [])
+      .map((m) => `${m.sender_role === 'agent' ? 'Agent' : 'Customer'}: ${m.content}`)
+      .join('\n')
+
+    const fullContext = conversationHistory
+      ? `Customer: ${customerMessage}\n${conversationHistory}`
+      : customerMessage
+
     // 1. Embed the customer's message
-    const queryEmbedding = await getEmbedding(customerMessage)
+    const queryEmbedding = await getEmbedding(fullContext)
 
         // 2. Guess the likely category using simple keyword matching
     function detectCategory(text: string): string | null {
@@ -84,11 +99,11 @@ export async function POST(req: NextRequest) {
         {
           role: 'system',
           content:
-            'You are a helpful customer support agent for NovaDesk. Answer the customer using ONLY the information in the provided sources. If the sources do not contain a relevant answer, say you are not certain and recommend escalating. Keep replies concise and professional.',
+            'You are a helpful customer support agent for NovaDesk. Answer the customer using ONLY the information in the provided sources. If the sources do not contain a relevant answer, say you are not certain and recommend escalating. Pay close attention to the full conversation history, not just the latest message — if the customer has mentioned something recurring, urgent, or previously discussed, acknowledge it directly rather than giving a generic first-time response. Keep replies concise and professional.',
         },
         {
           role: 'user',
-          content: `Sources:\n${context}\n\nCustomer message: ${customerMessage}\n\nWrite a suggested reply.`,
+          content: `Sources:\n${context}\n\nConversation so far:\n${fullContext}\n\nWrite a suggested reply to the customer's latest message, taking the full conversation into account.`,
         },
       ],
     })
