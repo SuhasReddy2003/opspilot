@@ -190,7 +190,7 @@ export default function AgentTicketDetail() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <NavBar role="agent" email={user?.email || ''} />
+      <NavBar role="agent" email={user?.email || ''} userId={user?.id} />
       <div className="max-w-3xl mx-auto w-full px-6 pt-6">
         <Link href="/agent" className="text-sm text-text-muted hover:text-text transition inline-flex items-center gap-1.5">
           ← Back to queue

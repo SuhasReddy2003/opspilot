@@ -76,7 +76,7 @@ export default function CustomerTicketDetail() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <NavBar role="customer" email={user.email || ''} />
+      <NavBar role="customer" email={user.email || ''} userId={user.id}/>
 
       <main className="max-w-3xl mx-auto w-full px-6 py-10 flex-1">
         <Link href="/dashboard" className="text-sm text-text-muted hover:text-text transition inline-flex items-center gap-1.5 mb-6">

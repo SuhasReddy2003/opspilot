@@ -73,7 +73,7 @@ export default function EvaluationPage() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <NavBar role="admin" email={user.email || ''} />
+      <NavBar role="admin" email={user.email || ''} userId={user.id} />
 
       <main className="max-w-3xl mx-auto w-full px-6 py-10 flex-1">
         <h1 className="text-2xl font-semibold mb-1">RAG Evaluation</h1>

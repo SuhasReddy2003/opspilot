@@ -100,7 +100,7 @@ export default function AgentDashboard() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <NavBar role="agent" email={user.email || ''} />
+      <NavBar role="agent" email={user.email || ''} userId={user.id}/>
 
       <main className="max-w-4xl mx-auto w-full px-6 py-10 flex-1">
         <h1 className="text-2xl font-semibold mb-1">Support Queue</h1>

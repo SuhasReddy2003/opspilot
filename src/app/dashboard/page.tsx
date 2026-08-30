@@ -106,7 +106,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <NavBar role="customer" email={user.email || ''} />
+      <NavBar role="customer" email={user.email || ''} userId={user.id} />
 
       <main className="max-w-4xl mx-auto w-full px-6 py-10 flex-1">
         <h1 className="text-2xl font-semibold mb-1">My Tickets</h1>
