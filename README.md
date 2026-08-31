@@ -1,3 +1,5 @@
+![CI](https://github.com/SuhasReddy2003/opspilot/actions/workflows/ci.yml/badge.svg)
+
 # ResolveAI
 
 AI-powered customer support platform with a retrieval-augmented, human-in-the-loop RAG pipeline. Built as a full-stack portfolio project demonstrating authentication, database design, semantic search, and grounded LLM generation.
