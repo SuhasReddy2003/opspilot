@@ -70,7 +70,10 @@ export default function LiveDemoWidget() {
         }
 
         if (hasStreamedRef.current) {
-          setAnswer((prev) => prev + chunk)
+          for (const char of chunk) {
+            setAnswer((prev) => prev + char)
+            await new Promise((r) => setTimeout(r, 8))
+          }
         }
       }
     } catch (err) {
