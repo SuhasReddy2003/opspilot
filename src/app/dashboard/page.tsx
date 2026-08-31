@@ -13,6 +13,7 @@ type Ticket = {
   description: string
   status: string
   priority: string
+  category: string
   created_at: string
 }
 
@@ -78,6 +79,24 @@ export default function DashboardPage() {
 
     if (!user) return
 
+    // Classify the ticket using AI before inserting, with a safe fallback
+    let priority = 'medium'
+    let category = 'Other'
+    try {
+      const classifyResponse = await fetch('/api/classify-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, description }),
+      })
+      if (classifyResponse.ok) {
+        const classification = await classifyResponse.json()
+        priority = classification.priority
+        category = classification.category
+      }
+    } catch (err) {
+      console.error('Classification failed, using defaults', err)
+    }
+
     const { data, error: insertError } = await supabase
       .from('tickets')
       .insert({
@@ -85,6 +104,8 @@ export default function DashboardPage() {
         subject,
         description,
         status: 'open',
+        priority,
+        category,
       })
       .select()
 
