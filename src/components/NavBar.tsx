@@ -19,8 +19,6 @@ export default function NavBar({ role, email, userId }: NavBarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const primaryHref = role === 'customer' ? '/dashboard' : '/agent'
-
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {

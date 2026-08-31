@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -68,6 +68,25 @@ export default function AgentTicketDetail() {
   const [feedbackGiven, setFeedbackGiven] = useState<string | null>(null)
   const [showSources, setShowSources] = useState(false)
 
+    const generateSuggestion = useCallback(async (customerMessage: string) => {
+    setLoadingSuggestion(true)
+    try {
+      const response = await fetch('/api/generate-suggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId, customerMessage }),
+      })
+      const data = await response.json()
+      if (data.suggestion) {
+        setSuggestion(data.suggestion)
+      }
+    } catch (err) {
+      console.error('Failed to generate suggestion', err)
+    } finally {
+      setLoadingSuggestion(false)
+    }
+  }, [ticketId])
+  
   useEffect(() => {
     async function load() {
       const { data: authData } = await supabase.auth.getUser()
@@ -112,26 +131,8 @@ export default function AgentTicketDetail() {
       }
     }
     load()
-  }, [ticketId, router])
+    }, [ticketId, router, generateSuggestion])
 
-  async function generateSuggestion(customerMessage: string) {
-    setLoadingSuggestion(true)
-    try {
-      const response = await fetch('/api/generate-suggestion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId, customerMessage }),
-      })
-      const data = await response.json()
-      if (data.suggestion) {
-        setSuggestion(data.suggestion)
-      }
-    } catch (err) {
-      console.error('Failed to generate suggestion', err)
-    } finally {
-      setLoadingSuggestion(false)
-    }
-  }
 
   async function handleFeedback(outcome: 'accepted' | 'edited' | 'rejected') {
     if (!user || !suggestion) return

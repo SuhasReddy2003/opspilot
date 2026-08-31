@@ -1,6 +1,16 @@
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
+type RetrievalResult = {
+  id: string
+  document_id: string
+  chunk_text: string
+  chunk_index: number
+  title: string
+  category: string
+  similarity: number
+}
+
 dotenv.config({ path: ".env.local" });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -80,7 +90,7 @@ async function main() {
 
   console.log("Top matching knowledge chunks:\n");
 
-  data.forEach((result: any, index: number) => {
+data.forEach((result: RetrievalResult, index: number) => {
     console.log(`${index + 1}. ${result.title}`);
     console.log(`   Category: ${result.category}`);
     console.log(`   Similarity: ${result.similarity.toFixed(4)}`);
