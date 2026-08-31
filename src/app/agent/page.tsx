@@ -13,6 +13,7 @@ type Ticket = {
   description: string
   status: string
   priority: string
+  category: string
   created_at: string
   customer_id: string
 }
@@ -147,9 +148,14 @@ export default function AgentDashboard() {
           {filteredTickets.map((ticket) => (
             <Link key={ticket.id} href={`/agent/${ticket.id}`}>
               <div className="glass-card rounded-xl p-5 hover:bg-surface-hover transition cursor-pointer">
-                <div className="flex items-center justify-between mb-2 gap-3">
+                                <div className="flex items-center justify-between mb-2 gap-3">
                   <h3 className="font-medium truncate">{ticket.subject}</h3>
                   <div className="flex items-center gap-2 shrink-0">
+                    {ticket.category && (
+                      <span className="text-xs font-medium px-2.5 py-1 rounded-full border bg-primary/10 text-primary border-primary/20">
+                        {ticket.category}
+                      </span>
+                    )}
                     <span
                       className={`text-xs font-medium px-2.5 py-1 rounded-full border capitalize ${priorityStyles[ticket.priority] || ''}`}
                     >
