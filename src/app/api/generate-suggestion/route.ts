@@ -12,22 +12,47 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 const EMBEDDING_MODEL = 'sentence-transformers/all-MiniLM-L6-v2'
 
-async function getEmbedding(text: string): Promise<number[]> {
-  const response = await fetch(
-    `https://router.huggingface.co/hf-inference/models/${EMBEDDING_MODEL}/pipeline/feature-extraction`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ inputs: text, options: { wait_for_model: true } }),
+async function getEmbedding(text: string, retries = 2): Promise<number[]> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000) // 15s timeout
+
+      const response = await fetch(
+        `https://router.huggingface.co/hf-inference/models/${EMBEDDING_MODEL}/pipeline/feature-extraction`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ inputs: text, options: { wait_for_model: true } }),
+          signal: controller.signal,
+        }
+      )
+      clearTimeout(timeout)
+
+      if (!response.ok) {
+        // Retry on server errors or rate limits, but not on bad requests (400s except 429)
+        if ((response.status >= 500 || response.status === 429) && attempt < retries) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1))) // backoff
+          continue
+        }
+        throw new Error(`Embedding API failed: ${response.status}`)
+      }
+
+      return response.json()
+    } catch (err) {
+      if (attempt === retries) {
+        throw new Error(
+          err instanceof Error && err.name === 'AbortError'
+            ? 'Embedding request timed out'
+            : `Embedding request failed: ${err instanceof Error ? err.message : String(err)}`
+        )
+      }
     }
-  )
-  if (!response.ok) {
-    throw new Error(`Embedding failed: ${response.status}`)
   }
-  return response.json()
+  throw new Error('Embedding failed after retries')
 }
 
 export async function POST(req: NextRequest) {

@@ -65,23 +65,36 @@ export default function AgentTicketDetail() {
 
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null)
   const [loadingSuggestion, setLoadingSuggestion] = useState(false)
+  const [suggestionError, setSuggestionError] = useState('')
   const [feedbackGiven, setFeedbackGiven] = useState<string | null>(null)
   const [showSources, setShowSources] = useState(false)
 
     const generateSuggestion = useCallback(async (customerMessage: string) => {
     setLoadingSuggestion(true)
+    setSuggestionError('')
     try {
       const response = await fetch('/api/generate-suggestion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId, customerMessage }),
       })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Request failed (${response.status})`)
+      }
+
       const data = await response.json()
       if (data.suggestion) {
         setSuggestion(data.suggestion)
+      } else {
+        throw new Error('No suggestion returned')
       }
     } catch (err) {
       console.error('Failed to generate suggestion', err)
+      setSuggestionError(
+        err instanceof Error ? err.message : 'AI suggestion unavailable right now'
+      )
     } finally {
       setLoadingSuggestion(false)
     }
@@ -249,6 +262,16 @@ export default function AgentTicketDetail() {
             {loadingSuggestion && (
               <div className="glow-ai rounded-xl p-5 mb-6 bg-surface text-text-muted text-sm">
                 Generating suggestion...
+              </div>
+            )}
+
+            {suggestionError && !loadingSuggestion && (
+              <div className="rounded-xl p-5 mb-6 bg-danger/5 border border-danger/20">
+                <p className="text-sm text-danger font-medium mb-1">AI suggestion unavailable</p>
+                <p className="text-xs text-text-muted mb-3">{suggestionError}</p>
+                <p className="text-xs text-text-muted">
+                  You can still reply to the customer manually using the form below.
+                </p>
               </div>
             )}
 
