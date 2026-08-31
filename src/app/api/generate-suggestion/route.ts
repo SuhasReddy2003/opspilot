@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Groq from 'groq-sdk'
 import { detectCategory } from '@/lib/rag-utils'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,8 +56,20 @@ async function getEmbedding(text: string, retries = 2): Promise<number[]> {
   throw new Error('Embedding failed after retries')
 }
 
+
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit by IP address as a simple, no-auth-required identifier
+    const identifier = req.headers.get('x-forwarded-for') || 'unknown'
+    const rateLimitResult = checkRateLimit(identifier)
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: `Too many requests. Try again in ${rateLimitResult.retryAfterSeconds} seconds.` },
+        { status: 429 }
+      )
+    }
+
     const { ticketId, customerMessage } = await req.json()
 
     if (!ticketId || !customerMessage) {
