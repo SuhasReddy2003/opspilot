@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import LiveDemoWidget from '@/components/LiveDemoWidget'
 
 export default function LandingPage() {
   return (
@@ -70,44 +71,7 @@ export default function LandingPage() {
           className="animate-fade-in-up w-full max-w-2xl mb-16"
           style={{ animationDelay: '0.4s' }}
         >
-          <div className="animate-pulse-glow rounded-2xl p-6 bg-surface">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-5 h-5 rounded-md bg-ai/20 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-ai" />
-              </div>
-              <p className="text-xs font-medium text-ai uppercase tracking-wide">AI Suggested Reply</p>
-            </div>
-            <p className="text-sm leading-relaxed text-text mb-4">
-              Hi there — it looks like this may be a duplicate charge. You&apos;re eligible for a
-              full refund since you&apos;re within the 14-day window. I&apos;ve started the
-              refund; it should appear on your original payment method within 5–7 business days.
-            </p>
-            <div className="border-t border-border pt-3 space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-text">
-                  Refund Policy <span className="text-text-muted">(Billing)</span>
-                </span>
-                <span className="font-mono text-ai">51%</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-text">
-                  Failed Payments <span className="text-text-muted">(Billing)</span>
-                </span>
-                <span className="font-mono text-ai">44%</span>
-              </div>
-            </div>
-            <div className="flex gap-2 mt-4">
-              <span className="text-xs px-3 py-1.5 rounded-lg bg-success/10 text-success border border-success/20">
-                ✓ Accept
-              </span>
-              <span className="text-xs px-3 py-1.5 rounded-lg bg-warning/10 text-warning border border-warning/20">
-                ✎ Edit
-              </span>
-              <span className="text-xs px-3 py-1.5 rounded-lg bg-danger/10 text-danger border border-danger/20">
-                ✕ Reject
-              </span>
-            </div>
-          </div>
+          <LiveDemoWidget />
         </div>
 
         <div
