@@ -15,6 +15,7 @@ Demo accounts (no signup needed):
 (Or sign up as a new customer directly from the live site.)
 
 ---
+![Landing page with live AI demo](docs/screenshots/landing.png)
 
 ## What it does
 
@@ -29,6 +30,8 @@ Customers submit support tickets for a fictional SaaS company, **NovaDesk**. Whe
 7. Logs that feedback and surfaces it in an analytics dashboard
 
 A separate evaluation page runs a curated set of test questions against the retrieval system and reports retrieval accuracy — treating "does the AI actually retrieve the right thing" as a measurable, testable property rather than a vibe.
+
+![AI suggested reply with sources and confidence scores](docs/screenshots/ai-suggestion.png)
 
 ## Architecture
 
@@ -73,7 +76,11 @@ A separate evaluation page runs a curated set of test questions against the retr
 - **RAG pipeline** — semantic retrieval over a knowledge base of ~12 NovaDesk support articles, with visible source citations and similarity scores on every AI suggestion
 - **Human-in-the-loop feedback** — agents accept, edit, or reject AI suggestions; every outcome is logged
 - **Analytics dashboard** — ticket volume, resolution status, and AI performance (acceptance/edit/rejection rates)
+
+![Admin analytics dashboard](docs/screenshots/analytics.png)
+
 - **RAG evaluation** — a 10-question curated test set measuring retrieval accuracy (currently ~70% top-1 accuracy; failure cases are documented and explainable — see below)
+- **Public live demo** — a streaming, no-login AI widget on the landing page lets anyone try real retrieval + generation instantly
 
 ## Tech stack
 
@@ -88,6 +95,8 @@ A separate evaluation page runs a curated set of test questions against the retr
 All free-tier, $0 infrastructure cost.
 
 ## Retrieval evaluation
+
+![RAG evaluation results showing 80% retrieval accuracy](docs/screenshots/evaluation.png)
 
 Run against a 10-question test set mapped to expected source articles:
 
